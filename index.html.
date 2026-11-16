@@ -1,1 +1,11 @@
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My First Browser Game</title>
+</head>
+<body>
+    <h1>Welcome to my game!</h1>
+    <p>Playable here soon.</p>
+</body>
+</html>
