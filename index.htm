@@ -2,85 +2,219 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Driving Game</title>
+    <title>Drive Mad Style Game</title>
     <style>
         body {
             background-color: #1a1a2e;
             color: white;
             text-align: center;
-            font-family: Arial, sans-serif;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #e94560;
+            margin-bottom: 5px;
         }
         canvas {
             background-color: #0f3460;
             border: 4px solid #e94560;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            box-shadow: 0 0 25px rgba(233, 69, 96, 0.4);
+            display: block;
+            margin: 20px auto;
+        }
+        .instructions {
+            color: #b2bec3;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
-    <h1>My Driving Game</h1>
-    <p>Use Left and Right arrow keys to drive!</p>
+
+    <h1>Monster Truck Challenge</h1>
+    <p class="instructions">Use <strong>Arrow Right</strong> to accelerate, <strong>Arrow Left</strong> to brake/reverse, and <strong>Arrow Up</strong> to jump over obstacles!</p>
+    
     <canvas id="gameCanvas" width="800" height="400"></canvas>
 
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
-        // Car properties
+        // Game states: 'start', 'playing', 'gameover'
+        let gameState = 'start';
+        let score = 0;
+
+        // Player (Car) properties
         let car = {
             x: 100,
-            y: 250,
-            width: 80,
-            height: 35,
+            y: 280,
+            width: 70,
+            height: 30,
             speed: 0,
-            angle: 0
+            vy: 0,
+            isJumping: false
         };
 
-        // Ground/Hill position
-        let groundY = 320;
+        // Obstacle properties
+        let obstacle = {
+            x: 800,
+            y: 285,
+            width: 30,
+            height: 45,
+            speed: 5
+        };
+
+        // Keyboard controls
+        let keys = {};
+        window.addEventListener("keydown", (e) => {
+            keys[e.key] = true;
+
+            if (gameState === 'start' && e.key === " ") {
+                gameState = 'playing';
+                resetGame();
+            }
+            if (gameState === 'gameover' && e.key === " ") {
+                gameState = 'playing';
+                resetGame();
+            }
+
+            // Jump control
+            if (e.key === "ArrowUp" && !car.isJumping && gameState === 'playing') {
+                car.vy = -11;
+                car.isJumping = true;
+            }
+        });
+
+        window.addEventListener("keyup", (e) => {
+            keys[e.key] = false;
+        });
+
+        function resetGame() {
+            car.x = 100;
+            car.y = 280;
+            car.speed = 0;
+            car.vy = 0;
+            car.isJumping = false;
+            obstacle.x = 800;
+            score = 0;
+        }
 
         function update() {
-            // Move car forward/backward
-            car.x += car.speed;
-            
-            // Friction
-            car.speed *= 0.98;
+            if (gameState !== 'playing') return;
 
-            // Keep car inside screen bounds
-            if (car.x < 0) car.x = 0;
+            // Handle acceleration and braking
+            if (keys["ArrowRight"]) {
+                car.speed += 0.2;
+            } else if (keys["ArrowLeft"]) {
+                car.speed -= 0.2;
+            } else {
+                car.speed *= 0.95; // Friction
+            }
+
+            // Limit max speed
+            if (car.speed > 7) car.speed = 7;
+            if (car.speed < -3) car.speed = -3;
+
+            car.x += car.speed;
+
+            // Gravity & Jumping physics
+            car.vy += 0.5; // Gravity pull
+            car.y += car.vy;
+
+            // Ground collision
+            let groundLevel = 280;
+            if (car.y > groundLevel) {
+                car.y = groundLevel;
+                car.vy = 0;
+                car.isJumping = false;
+            }
+
+            // Move obstacle
+            obstacle.x -= obstacle.speed + Math.abs(car.speed * 0.5);
+
+            // Reset obstacle when it goes off screen & add score
+            if (obstacle.x < -50) {
+                obstacle.x = 850 + Math.random() * 200;
+                score += 10;
+                // Increase difficulty slightly
+                obstacle.speed += 0.2;
+            }
+
+            // Collision detection (Car hits obstacle)
+            if (
+                car.x < obstacle.x + obstacle.width &&
+                car.x + car.width > obstacle.x &&
+                car.y < obstacle.y + obstacle.height &&
+                car.y + car.height > obstacle.y
+            ) {
+                gameState = 'gameover';
+            }
+
+            // Screen boundaries for car
+            if (car.x < 50) car.x = 50;
+            if (car.x > canvas.width - 100) car.x = canvas.width - 100;
         }
 
         function draw() {
             // Clear screen
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw ground/hill (slope like Drive Mad)
-            ctx.fillStyle = "#e94560";
+            // Draw Ground line
+            ctx.strokeStyle = "#e94560";
+            ctx.lineWidth = 4;
             ctx.beginPath();
-            ctx.moveTo(0, groundY + 50);
-            ctx.lineTo(400, groundY);
-            ctx.lineTo(800, groundY + 20);
-            ctx.lineTo(800, canvas.height);
-            ctx.lineTo(0, canvas.height);
+            ctx.moveTo(0, 311);
+            ctx.lineTo(canvas.width, 311);
+            ctx.stroke();
+
+            if (gameState === 'start') {
+                ctx.fillStyle = "white";
+                ctx.font = "30px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText("MONSTER TRUCK CHALLENGE", canvas.width / 2, 150);
+                ctx.font = "18px Arial";
+                ctx.fillStyle = "#e94560";
+                ctx.fillText("Press [SPACEBAR] to Start", canvas.width / 2, 210);
+                return;
+            }
+
+            if (gameState === 'gameover') {
+                ctx.fillStyle = "#ff4757";
+                ctx.font = "35px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText("CRASH! GAME OVER", canvas.width / 2, 140);
+                ctx.fillStyle = "white";
+                ctx.font = "20px Arial";
+                ctx.fillText("Final Score: " + score, canvas.width / 2, 190);
+                ctx.fillStyle = "#e94560";
+                ctx.fillText("Press [SPACEBAR] to Try Again", canvas.width / 2, 240);
+                return;
+            }
+
+            // Draw Obstacle (red block/wall)
+            ctx.fillStyle = "#ff6b6b";
+            ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+
+            // Draw Car body
+            ctx.fillStyle = "#feca57";
+            ctx.fillRect(car.x, car.y, car.width, car.height);
+            
+            // Car cabin (top part)
+            ctx.fillStyle = "#ff9f43";
+            ctx.fillRect(car.x + 15, car.y - 15, car.width - 30, 15);
+
+            // Wheels
+            ctx.fillStyle = "#222";
+            ctx.beginPath();
+            ctx.arc(car.x + 15, car.y + car.height, 10, 0, Math.PI * 2);
+            ctx.arc(car.x + car.width - 15, car.y + car.height, 10, 0, Math.PI * 2);
             ctx.fill();
 
-            // Draw car
-            ctx.save();
-            ctx.translate(car.x, car.y);
-            ctx.rotate(car.angle);
-            
-            // Car body
-            ctx.fillStyle = "#f9ed69";
-            ctx.fillRect(-car.width/2, -car.height, car.width, car.height);
-            
-            // Wheels
-            ctx.fillStyle = "#162447";
-            ctx.beginPath();
-            ctx.arc(-25, 0, 12, 0, Math.PI * 2);
-            ctx.arc(25, 0, 12, 0, Math.PI * 2);
-            ctx.fill();
-            
-            ctx.restore();
+            // Draw Score
+            ctx.fillStyle = "white";
+            ctx.font = "20px Arial";
+            ctx.textAlign = "left";
+            ctx.fillText("Score: " + score, 20, 35);
         }
 
         function gameLoop() {
@@ -89,17 +223,8 @@
             requestAnimationFrame(gameLoop);
         }
 
-        // Controls
-        window.addEventListener("keydown", (e) => {
-            if (e.key === "ArrowRight") {
-                car.speed += 0.5; // Accelerate forward
-            }
-            if (e.key === "ArrowLeft") {
-                car.speed -= 0.3; // Reverse/brake
-            }
-        });
-
         gameLoop();
     </script>
+
 </body>
 </html>
