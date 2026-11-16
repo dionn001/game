@@ -2,54 +2,103 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>My Browser Game</title>
+    <title>Driving Game</title>
     <style>
         body {
-            background-color: #222;
+            background-color: #1a1a2e;
             color: white;
             text-align: center;
             font-family: Arial, sans-serif;
         }
         canvas {
-            background-color: #111;
-            border: 2px solid white;
+            background-color: #0f3460;
+            border: 4px solid #e94560;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
         }
     </style>
 </head>
 <body>
-    <h1>My Awesome Game</h1>
-    <canvas id="gameCanvas" width="600" height="400"></canvas>
+    <h1>My Driving Game</h1>
+    <p>Use Left and Right arrow keys to drive!</p>
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
 
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
-        // Player starting position
-        let playerX = 50;
-        let playerY = 50;
-        const playerSize = 30;
+        // Car properties
+        let car = {
+            x: 100,
+            y: 250,
+            width: 80,
+            height: 35,
+            speed: 0,
+            angle: 0
+        };
 
-        function gameLoop() {
+        // Ground/Hill position
+        let groundY = 320;
+
+        function update() {
+            // Move car forward/backward
+            car.x += car.speed;
+            
+            // Friction
+            car.speed *= 0.98;
+
+            // Keep car inside screen bounds
+            if (car.x < 0) car.x = 0;
+        }
+
+        function draw() {
             // Clear screen
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw player
-            ctx.fillStyle = "lime";
-            ctx.fillRect(playerX, playerY, playerSize, playerSize);
+            // Draw ground/hill (slope like Drive Mad)
+            ctx.fillStyle = "#e94560";
+            ctx.beginPath();
+            ctx.moveTo(0, groundY + 50);
+            ctx.lineTo(400, groundY);
+            ctx.lineTo(800, groundY + 20);
+            ctx.lineTo(800, canvas.height);
+            ctx.lineTo(0, canvas.height);
+            ctx.fill();
 
-            // Request next frame
+            // Draw car
+            ctx.save();
+            ctx.translate(car.x, car.y);
+            ctx.rotate(car.angle);
+            
+            // Car body
+            ctx.fillStyle = "#f9ed69";
+            ctx.fillRect(-car.width/2, -car.height, car.width, car.height);
+            
+            // Wheels
+            ctx.fillStyle = "#162447";
+            ctx.beginPath();
+            ctx.arc(-25, 0, 12, 0, Math.PI * 2);
+            ctx.arc(25, 0, 12, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore();
+        }
+
+        function gameLoop() {
+            update();
+            draw();
             requestAnimationFrame(gameLoop);
         }
 
-        // Simple movement with arrow keys
+        // Controls
         window.addEventListener("keydown", (e) => {
-            if (e.key === "ArrowRight") playerX += 10;
-            if (e.key === "ArrowLeft") playerX -= 10;
-            if (e.key === "ArrowUp") playerY -= 10;
-            if (e.key === "ArrowDown") playerY += 10;
+            if (e.key === "ArrowRight") {
+                car.speed += 0.5; // Accelerate forward
+            }
+            if (e.key === "ArrowLeft") {
+                car.speed -= 0.3; // Reverse/brake
+            }
         });
 
-        // Start the game loop
         gameLoop();
     </script>
 </body>
