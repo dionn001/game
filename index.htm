@@ -2,10 +2,55 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>My First Browser Game</title>
+    <title>My Browser Game</title>
+    <style>
+        body {
+            background-color: #222;
+            color: white;
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            background-color: #111;
+            border: 2px solid white;
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome to my game!</h1>
-    <p>Playable here soon.</p>
+    <h1>My Awesome Game</h1>
+    <canvas id="gameCanvas" width="600" height="400"></canvas>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // Player starting position
+        let playerX = 50;
+        let playerY = 50;
+        const playerSize = 30;
+
+        function gameLoop() {
+            // Clear screen
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw player
+            ctx.fillStyle = "lime";
+            ctx.fillRect(playerX, playerY, playerSize, playerSize);
+
+            // Request next frame
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Simple movement with arrow keys
+        window.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowRight") playerX += 10;
+            if (e.key === "ArrowLeft") playerX -= 10;
+            if (e.key === "ArrowUp") playerY -= 10;
+            if (e.key === "ArrowDown") playerY += 10;
+        });
+
+        // Start the game loop
+        gameLoop();
+    </script>
 </body>
 </html>
